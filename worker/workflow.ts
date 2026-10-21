@@ -11,6 +11,11 @@ type BackupParams = {
   date: string;
 };
 
+type BackupEnv = Env & {
+  D1_REST_API_TOKEN: string;
+  BACKUP_BUCKET: R2Bucket;
+};
+
 type ExportResult = {
   signed_url?: string;
   current_bookmark?: string;
@@ -53,7 +58,7 @@ async function exportRequest(
 }
 
 export class MyWorkflow extends WorkflowEntrypoint<
-  Env,
+  BackupEnv,
   BackupParams
 > {
   async run(
