@@ -3,17 +3,16 @@ export { MyWorkflow } from "./workflow";
 export { WorkflowStatusDO } from "./durable-object";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    // The backup service is not publicly accessible.
+  async fetch(): Promise<Response> {
     return new Response("Not found", { status: 404 });
   },
 
   async scheduled(
-    event: ScheduledEvent,
+    controller: ScheduledController,
     env: Env,
     ctx: ExecutionContext
   ): Promise<void> {
-    const date = new Date(event.scheduledTime)
+    const date = new Date(controller.scheduledTime)
       .toISOString()
       .slice(0, 10);
 
