@@ -17,8 +17,10 @@ type BackupEnv = Env & {
 };
 
 type ExportResult = {
-  signed_url?: string;
-  current_bookmark?: string;
+  at_bookmark?: string;
+  status?: string;
+  error?: string;
+  result?: { signed_url?: string };
 };
 
 async function exportRequest(
@@ -54,7 +56,11 @@ async function exportRequest(
     );
   }
 
-  return data.result || {};
+  const exportState = data.result || {};
+  if (exportState.status === "error" || exportState.error) {
+    throw new Error(`D1 export error: ${exportState.error || "unknown error"}`);
+  }
+  return exportState;
 }
 
 export class MyWorkflow extends WorkflowEntrypoint<
@@ -82,9 +88,9 @@ export class MyWorkflow extends WorkflowEntrypoint<
     );
 
     for (let attempt = 1; attempt <= 60; attempt++) {
-      if (result.signed_url) break;
+      if (result.result?.signed_url) break;
 
-      const bookmark = result.current_bookmark;
+      const bookmark = result.at_bookmark;
 
       if (!bookmark) {
         throw new Error(
@@ -106,11 +112,12 @@ export class MyWorkflow extends WorkflowEntrypoint<
       );
     }
 
-    if (!result.signed_url) {
+    if (!result.result?.signed_url) {
       throw new Error("D1 export timed out");
     }
 
-    const downloadUrl = result.signed_url;
+    const downloadUrl = result.result?.signed_url;
+    if (!downloadUrl) throw new Error("D1 export completed without download URL");
 
     const saved = await step.do(
       "save SQL backup to EU R2",
